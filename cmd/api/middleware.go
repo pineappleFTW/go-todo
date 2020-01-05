@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -42,16 +43,23 @@ func (app *application) requireAuthentication(h httprouter.Handle) httprouter.Ha
 
 		token := r.Header.Get("Authorization")
 		app.infoLog.Printf("%s", token)
-		ok, err := app.verifyToken(token)
+		id, err := app.verifyToken(token)
 		if err != nil {
-			app.generateErrorResponse(w, err, http.StatusInternalServerError)
+			app.generateErrorResponse(w, err, http.StatusUnauthorized)
 			return
 		}
 
-		if !ok {
-			app.generateErrorResponse(w, err, http.StatusInternalServerError)
+		if id == 0 || id < 0 {
+			app.generateErrorResponse(w, err, http.StatusUnauthorized)
 			return
 		}
+
+		user, err := app.user.UserGetByID(id)
+		if err != nil {
+			app.generateErrorResponse(w, err, http.StatusUnauthorized)
+		}
+		ctx := context.WithValue(r.Context(), contextRequestUser, user)
+		r = r.WithContext(ctx)
 
 		h(w, r, ps)
 	}

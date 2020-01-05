@@ -13,17 +13,20 @@ func (app *application) routes() http.Handler {
 
 	router := httprouter.New()
 	router.GET("/", Index)
-	router.POST("/todo", app.createTodo)
-	router.GET("/todo/:id", app.showTodo)
-	router.GET("/todo", app.requireAuthentication(app.showAllTodos))
-	router.PATCH("/todo/:id", app.updateTodo)
-	router.DELETE("/todo/:id", app.deleteTodo)
+	router.POST("/todo", app.requireAuthentication(app.createTodo))
+	router.GET("/todo/:id", app.requireAuthentication(app.showTodo))
+	router.GET("/todos", app.requireAuthentication(app.showAllTodos))
+	router.PATCH("/todo/:id", app.requireAuthentication(app.updateTodo))
+	router.DELETE("/todo/:id", app.requireAuthentication(app.deleteTodo))
 
+	router.POST("/user/signup", app.signupUser)
+	router.POST("/user/login", app.loginUser)
 	router.POST("/user", app.createUser)
 	router.GET("/user/:id", app.showUser)
 	router.GET("/users", app.showAllUsers)
 	router.PATCH("/user/:id", app.updateUser)
 	router.DELETE("/user/:id", app.deleteUser)
+	router.GET("/token/refresh", app.refresh)
 
 	return standardMiddleware.Then(router)
 }

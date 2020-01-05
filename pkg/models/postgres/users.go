@@ -111,26 +111,28 @@ func (u *UserModel) UserDeleteByID(id int) error {
 	return nil
 }
 
-//UserIsPasswordMatched get hashedpassword of user
-func (u *UserModel) UserIsPasswordMatched(id int, password string) (bool, error) {
-	stmt := `select hashed_password from users where id = $1`
-	row := u.DB.QueryRow(stmt, id)
+//Authenticate get hashedpassword of user
+func (u *UserModel) Authenticate(email, password string) (int, error) {
+	stmt := `select id, hashed_password from users where email = $1 and active = true`
+	row := u.DB.QueryRow(stmt, email)
+
+	var id int
 	var hashedPassword []byte
-	err := row.Scan(&hashedPassword)
+	err := row.Scan(&id, &hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, models.ErrInvalidCredentials
+			return 0, models.ErrInvalidCredentials
 		}
-		return false, err
+		return 0, err
 	}
 
 	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return false, models.ErrInvalidCredentials
+			return 0, models.ErrInvalidCredentials
 		}
-		return false, err
+		return 0, err
 	}
 
-	return true, nil
+	return id, nil
 }

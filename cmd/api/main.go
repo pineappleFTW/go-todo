@@ -16,15 +16,20 @@ import (
 )
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	todo     models.TodoStore
-	user     models.UserStore
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	todo          models.TodoStore
+	user          models.UserStore
+	refreshTokens models.RefreshTokenStore
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "welcome!\n")
 }
+
+type contextKey string
+
+const contextRequestUser = contextKey("requestUser")
 
 func main() {
 	//command line for addr
@@ -43,10 +48,11 @@ func main() {
 	defer db.Close()
 
 	app := &application{
-		infoLog:  infoLog,
-		errorLog: errorLog,
-		todo:     &postgres.TodoModel{DB: db},
-		user:     &postgres.UserModel{DB: db},
+		infoLog:       infoLog,
+		errorLog:      errorLog,
+		todo:          &postgres.TodoModel{DB: db},
+		user:          &postgres.UserModel{DB: db},
+		refreshTokens: &postgres.RefreshTokenModel{DB: db},
 	}
 
 	srv := &http.Server{

@@ -15,4 +15,17 @@ create table users (
     created timestamp not null
 );
 
+create table refresh_tokens (
+    id serial primary key not null,
+    identifier varchar(255) not null, 
+    token varchar(255) not null,
+    user_id int references users(id) not null,
+    created timestamp not null,
+    updated timestamp not null
+);
+
+alter table refresh_tokens add constraint refresh_tokens_uc_identifer unique(identifier);
+
+alter table refresh_tokens add constraint refresh_tokens_uc_token unique(token);
+
 alter table users add constraint users_uc_email unique (email);

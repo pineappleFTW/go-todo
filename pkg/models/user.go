@@ -14,7 +14,7 @@ type UserStore interface {
 	UserSave(string, string, string) (int, error)
 	UserDeleteByID(int) error
 	UserUpdateByID(int, string, int, bool) (int, error)
-	UserIsPasswordMatched(int, string) (bool, error)
+	Authenticate(string, string) (int, error)
 }
 
 var (
@@ -50,5 +50,19 @@ func (u User) ValidateUpdateUser() error {
 		validation.Field(&u.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&u.Role, validation.Required),
 		// validation.Field(&u.Active, validation.Required),
+	)
+}
+
+//Credentials used when logging in
+type Credentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password,omitempty"`
+}
+
+//Validate incoming user login request
+func (c Credentials) Validate() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.Email, validation.Required, validation.Length(1, 50), is.Email),
+		validation.Field(&c.Password, validation.Required, validation.Length(6, 50)),
 	)
 }

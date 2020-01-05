@@ -60,6 +60,10 @@ func (app *application) showTodo(w http.ResponseWriter, r *http.Request, ps http
 }
 
 func (app *application) showAllTodos(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	user, _ := r.Context().Value(contextRequestUser).(*models.User)
+	app.infoLog.Printf("%+v", user)
+
 	todos, err := app.todo.TodoGetAll()
 	if err != nil {
 		app.generateErrorResponse(w, err, http.StatusInternalServerError)
