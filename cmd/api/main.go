@@ -31,6 +31,8 @@ type contextKey string
 
 const contextRequestUser = contextKey("requestUser")
 
+// go run ./cmd/api >>/tmp/info.log 2>>/tmp/error.log
+
 func main() {
 	//command line for addr
 	addr := flag.String("addr", ":4000", "HTTP network address")

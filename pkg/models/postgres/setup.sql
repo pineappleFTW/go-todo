@@ -1,3 +1,5 @@
+--  psql -f ./pkg/models/postgres/setup.sql -d todo
+
 create table todos (
     id serial primary key not null,
     title varchar(255) not null,
