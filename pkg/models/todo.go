@@ -10,17 +10,18 @@ import (
 type TodoStore interface {
 	TodoGetByID(int) (*Todo, error)
 	TodoGetAll() ([]*Todo, error)
-	TodoSave(string, string) (int, error)
+	TodoSave(string, string, int) (int, error)
 	TodoDeleteByID(int) error
 	TodoUpdateByID(int, string, string) (int, error)
 }
 
 //Todo is exported
 type Todo struct {
-	ID      int       `json:"id"`
-	Title   string    `json:"title"`
-	Content string    `json:"content"`
-	Created time.Time `json:"created"`
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	CreatedBy *User     `json:"created_by"`
+	Content   string    `json:"content"`
+	Created   time.Time `json:"created"`
 }
 
 //Validate incoming request

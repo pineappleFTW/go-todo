@@ -1,12 +1,5 @@
 --  psql -f ./pkg/models/postgres/setup.sql -d todo
 
-create table todos (
-    id serial primary key not null,
-    title varchar(255) not null,
-    content text not null,
-    created timestamp not null
-);
-
 create table users (
     id serial primary key not null,
     name varchar(255) not null,
@@ -14,6 +7,14 @@ create table users (
     hashed_password char(60) not null,
     role int not null,
     active boolean not null default true,
+    created timestamp not null
+);
+
+create table todos (
+    id serial primary key not null,
+    title varchar(255) not null,
+    content text not null,
+    created_by int references users(id) not null,
     created timestamp not null
 );
 

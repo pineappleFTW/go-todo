@@ -23,7 +23,10 @@ func (app *application) createTodo(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	id, err := app.todo.TodoSave(t.Title, t.Content)
+	user, _ := r.Context().Value(contextRequestUser).(*models.User)
+	app.infoLog.Print(user)
+
+	id, err := app.todo.TodoSave(t.Title, t.Content, user.ID)
 	if err != nil {
 		app.generateErrorResponse(w, err, http.StatusInternalServerError)
 		return
@@ -60,9 +63,6 @@ func (app *application) showTodo(w http.ResponseWriter, r *http.Request, ps http
 }
 
 func (app *application) showAllTodos(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
-	user, _ := r.Context().Value(contextRequestUser).(*models.User)
-	app.infoLog.Printf("%+v", user)
 
 	todos, err := app.todo.TodoGetAll()
 	if err != nil {
@@ -108,6 +108,16 @@ func (app *application) deleteTodo(w http.ResponseWriter, r *http.Request, ps ht
 	id, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
+		return
+	}
+
+	_, err = app.todo.TodoGetByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.generateFailResponse(w, models.ErrNoRecord.Error(), http.StatusBadRequest)
+			return
+		}
+		app.generateErrorResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 

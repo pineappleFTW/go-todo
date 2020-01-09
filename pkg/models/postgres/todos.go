@@ -12,14 +12,14 @@ type TodoModel struct {
 }
 
 //TodoSave saves into db and implement TodoStore interface
-func (t *TodoModel) TodoSave(title, content string) (int, error) {
+func (t *TodoModel) TodoSave(title, content string, createdBy int) (int, error) {
 
-	stmt := `insert into todos (title, content, created)
-	VALUES($1, $2, current_timestamp) returning id`
+	stmt := `insert into todos (title, content, created_by, created)
+	VALUES($1, $2, $3, current_timestamp) returning id`
 
 	var id int
 
-	err := t.DB.QueryRow(stmt, title, content).Scan(&id)
+	err := t.DB.QueryRow(stmt, title, content, createdBy).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -43,13 +43,15 @@ func (t *TodoModel) TodoUpdateByID(id int, title, content string) (int, error) {
 //TodoGetByID gets specific todo
 func (t *TodoModel) TodoGetByID(id int) (*models.Todo, error) {
 
-	stmt := `select id, title, content, created from todos 
+	stmt := `select id, title, content, created_by, created from todos 
 	where id = $1`
 
 	row := t.DB.QueryRow(stmt, id)
 	td := &models.Todo{}
+	td.CreatedBy = &models.User{}
+	var userID int
 
-	err := row.Scan(&td.ID, &td.Title, &td.Content, &td.Created)
+	err := row.Scan(&td.ID, &td.Title, &td.Content, &userID, &td.Created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, models.ErrNoRecord
@@ -58,13 +60,25 @@ func (t *TodoModel) TodoGetByID(id int) (*models.Todo, error) {
 		}
 	}
 
+	stmt = `select id, name, email, role, active, created from users where id = $1`
+
+	row = t.DB.QueryRow(stmt, userID)
+
+	err = row.Scan(&td.CreatedBy.ID, &td.CreatedBy.Name, &td.CreatedBy.Email, &td.CreatedBy.Role, &td.CreatedBy.Active, &td.CreatedBy.Created)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNoRecord
+		}
+		return nil, err
+	}
+
 	return td, nil
 }
 
 //TodoGetAll gets all
 func (t *TodoModel) TodoGetAll() ([]*models.Todo, error) {
 
-	stmt := `SELECT id, title, content, created from todos
+	stmt := `SELECT id, title, content, created_by, created from todos
 	order by created desc limit 50`
 
 	rows, err := t.DB.Query(stmt)
@@ -77,11 +91,23 @@ func (t *TodoModel) TodoGetAll() ([]*models.Todo, error) {
 	todos := []*models.Todo{}
 
 	for rows.Next() {
+		var userID int
 		td := &models.Todo{}
-		err = rows.Scan(&td.ID, &td.Title, &td.Content, &td.Created)
+		td.CreatedBy = &models.User{}
+		err = rows.Scan(&td.ID, &td.Title, &td.Content, &userID, &td.Created)
 		if err != nil {
 			return nil, err
 		}
+
+		stmt = `select id, name, email, role, active, created from users where id = $1`
+
+		row := t.DB.QueryRow(stmt, userID)
+
+		err = row.Scan(&td.CreatedBy.ID, &td.CreatedBy.Name, &td.CreatedBy.Email, &td.CreatedBy.Role, &td.CreatedBy.Active, &td.CreatedBy.Created)
+		if err != nil {
+			return nil, err
+		}
+
 		todos = append(todos, td)
 	}
 
